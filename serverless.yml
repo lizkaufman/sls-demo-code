@@ -1,0 +1,81 @@
+service: demo #the name of the project, populated automatically; this will be in all the functions in Lambda (i.e. demo-dev-functionName)
+
+custom: #custom environment object that gets pointed to by ${self:} in the provider and resources objects below
+  settings:
+    DEMO_TABLE: demoTable #what your table will be called in DynamoDB
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  environment: ${self:custom.settings} #self refers to the file itself (so we're saying get the settings for the environment from this file itself)
+  region: eu-west-1 #ireland
+  iamRoleStatements:
+    - Effect: 'Allow' #tells it to allow the following actions in this role
+      Action:
+        - dynamodb:DescribeTable #to know metadata about the table
+        - dynamodb:Scan #gets all the items (like a get req)
+        - dynamodb:GetItem #gets one item
+        - dynamodb:PutItem #adds one item
+        - dynamodb:UpdateItem #like a patch request
+        - dynamodb:DeleteItem #deletes
+      Resource:
+        'arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.ORGS_TABLE}'
+        #arn = amazon resource name, then specify dynamodb
+        #then use self to point to Region here in Provider object
+        #then use self again to define this from the table declared earlier in the custom environment variables
+
+functions: #here's where we give it the instructions on where to find and what to do with each function, including which path to listen on and which http method to listen for
+  #it has similar bits to a normal router function in Express; it's just formatted in a different way
+  getAllItems: #get
+    handler: handler.getAllItems #points to the handler file and then the specific function
+    events:
+      - http:
+          path: / #the path, what will be added onto the URL that Serverless will generate for you once you deploy
+          method: get #the http method this'll respond to
+          cors: true #This helps to play the role that CORS middleware would in an Express server
+  getItemById: #get by id
+    handler: handler.getItemById
+    events:
+      - http:
+          path: /{id}
+          method: get
+          cors: true
+  addItem: #post
+    handler: handler.addItem
+    events:
+      - http:
+          path: /
+          method: post
+          cors: true
+  updateItem: #put (uses id)
+    handler: handler.updateBenism
+    events:
+      - http:
+          path: /{id}
+          method: put
+          cors: true
+  deleteItem: #delete (uses id)
+    handler: handler.deleteItem
+    events:
+      - http:
+          path: /{id}
+          method: delete
+          cors: true
+
+resources:
+  Resources:
+    DemoTable:
+      Type: AWS::DynamoDB::Table #telling it that we want this to become a table in DynamoDB
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: 'id' #defining that no matter what else is in the data objects, each one will have something called an id
+            AttributeType: 'S' #type will be a string
+        KeySchema: #this specifies the partition key (what we'd call the primary key in SQL)
+          - AttributeName: 'id' #we're telling it here that we want it to be the id we defined above
+            KeyType: 'HASH' #this makes sure it knows it's the partition key
+            #if we had a sort key (a secondary key to help look up things from the table), we'd call its KeyType 'RANGE'
+        ProvisionedThroughput: #in provisioned mode, you give it units to define how many times the table will read/write (controlling usage and therefore cost)
+          #you could also do it in on-demand mode, but that could get £££ and isn't free tier-elligble
+          ReadCapacityUnits: 1 #capacity for 3,600 reads per hour
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.settings.DEMO_TABLE} #tells it to get the name from our custom environment object at the top
