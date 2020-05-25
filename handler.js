@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require('uuid'); //requires v4 within uuid - need to npm 
 
 const demoTable = process.env.DEMO_TABLE; //gets the table from the environment variables (which we've set up in the YAML) and saves it to a variable we can use in the functions below
 
-//---------HELPER FUNCTION TO SEND RESPONSES WITH HEADERS:---------
+//---------HELPER FUNCTION TO SEND RESPONSE JSONS WITH HEADERS:---------
 
 //This saves you from having to do these bits in each function :)
 function response(statusCode, message) {
@@ -54,7 +54,7 @@ module.exports.getItemById = (event, context, callback) => {
   };
 
   return db
-    .get(params)
+    .get(params) //passes the params object to get to use it to look for the id in the table
     .promise()
     .then((res) => {
       if (res.Item) callback(null, response(200, res.Item));
@@ -86,12 +86,63 @@ module.exports.addItem = (event, context, callback) => {
 
   return db
     .put({
-      TableName: benismsTable,
-      Item: benism,
+      //passes the table name and the item we just created above to the put
+      //NOTE: even though it's creating a new item and is set up in the YAML to respond to post requests, you still use put here when it's talking directly to DynamoDB (it puts a new item rather than putting a replacement here)
+      TableName: demoTable,
+      Item: item,
     })
     .promise()
     .then(() => {
-      callback(null, response(200, benism));
+      callback(null, response(200, item));
     })
     .catch((err) => response(null, response(err.statusCode, err)));
+};
+
+//---------UPDATE ITEM (PUT REQUEST):---------
+
+module.exports.updateItem = (event, context, callback) => {
+  const id = event.pathParameters.id; //gets the id out of the path params just like with get by id above
+  const reqBody = JSON.parse(event.body); //parses the body just like with the post above
+
+  const item = {
+    //similar to the post above, using the body, but we already have the id from the params, so we use it and don't generate a new one with uuid
+    id: id, //it'll use the id to match the item since it's the partition key
+    createdAt: new Date().toISOString(), //I have this pulling double duty as an updated date as well; it'll repalce the initial createdAt date from when it was posted... there's probably a more elegant way of doing this though!
+    name: reqBody.name,
+    definition: reqBody.definition,
+  };
+
+  return db
+    .put({
+      //just like in the post above (still a put, but this time we're doing a put that we're used to, making a direct replacement of the item)
+      TableName: demoTable,
+      Item: item,
+    })
+    .promise()
+    .then((res) => {
+      callback(null, response(200, res));
+    })
+    .catch((err) => callback(null, response(err.statusCode, err)));
+};
+
+//---------DELETE ITEM:---------
+
+module.exports.deleteItem = (event, context, callback) => {
+  const id = event.pathParameters.id;
+
+  const params = {
+    //same params object as with the get by id function above
+    Key: {
+      id: id,
+    },
+    TableName: demoTable,
+  };
+
+  return db
+    .delete(params) //params are passed to delete so that it can do what it says on the tin for the relevant item
+    .promise()
+    .then(() =>
+      callback(null, response(200, { message: `${id} deleted successfully` }))
+    )
+    .catch((err) => callback(null, response(err.statusCode, err)));
 };
