@@ -16,4 +16,4 @@ https://www.serverless.com/blog/cors-api-gateway-survival-guide/
 
 - npm i -g serverless (installs Serverless globally on your machine the first time you use it)
 - serverless (starts your project and asks you the setup questions)
-- sls deploy (sends your code to AWS once you've set up your credentials; redeploy using this every time you make changes, and it'll swap out the old code with the new)
+- sls deploy (sends your code to AWS once you've set up your credentials; redeploy using this every time you make changes, and it'll swap out the old code with the new; also, it'll give you your URLS for your end points in the console for you to copy and paste once it's deployed your code)
