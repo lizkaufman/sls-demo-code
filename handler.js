@@ -1,5 +1,9 @@
-'use strict';
-const AWS = require('aws-sdk'); //requires AWS
+//This is where the functions live that the functions section of the YAML file points to. These functions get added to Lambda, where they'll run in their own containers (kind of like Docker) when they receive a request to the path/method specified in the YAML.
+
+//TODO: Just to note, it's better practice to have each function in a separate file, so eventually I'll refactor this and annotate accordingly. For now though, they're all in this one file.
+
+'use strict'; //enables strict mode, which makes things that normally cause warnings error out (keeps the code cleaner)
+const AWS = require('aws-sdk'); //requires AWS; set up your credentials by following the instructions here: https://www.serverless.com/framework/docs/providers/aws/guide/credentials/
 const db = new AWS.DynamoDB.DocumentClient({ apiVersion: '2019.11.21' }); //creates a new instance of DynamoDB when called using the AWS SDK
 const { v4: uuidv4 } = require('uuid'); //requires v4 within uuid - need to npm i uuid to use as well
 
@@ -124,6 +128,7 @@ module.exports.updateItem = (event, context, callback) => {
     })
     .catch((err) => callback(null, response(err.statusCode, err)));
 };
+//TODO: This works well for simpler data (i.e. a simple form) where you can just put the whole object, incl. changes; this is what we used for Volt. For something more complex, I have code for a more patch-like edit function that targets a specific key/value in the item. It's a little more complicated, and I've never actually used it in my code from the front end though (only a few tests on Postman). Let me know if you have a burning desire for it and I can share it or add it here!
 
 //---------DELETE ITEM:---------
 
