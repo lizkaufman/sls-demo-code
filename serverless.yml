@@ -48,7 +48,7 @@ functions: #here's where we give it the instructions on where to find and what t
           method: post
           cors: true
   updateItem: #put (uses id)
-    handler: handler.updateBenism
+    handler: handler.updateItem
     events:
       - http:
           path: /{id}
