@@ -19,7 +19,7 @@ provider:
         - dynamodb:UpdateItem #like a patch request
         - dynamodb:DeleteItem #deletes
       Resource:
-        'arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.ORGS_TABLE}'
+        'arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.settings.DEMO_TABLE}'
         #arn = amazon resource name, then specify dynamodb
         #then use self to point to Region here in Provider object
         #then use self again to define this from the table declared earlier in the custom environment variables
