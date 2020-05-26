@@ -9,8 +9,8 @@ provider:
   runtime: nodejs12.x
   environment: ${self:custom.settings} #self refers to the file itself (so we're saying get the settings for the environment from this file itself)
   region: eu-west-1 #ireland
-  iamRoleStatements:
-    - Effect: 'Allow' #tells it to allow the following actions in this role
+  iamRoleStatements: #once you configure your AWS-SDK with the instructions here (https://www.serverless.com/framework/docs/providers/aws/guide/credentials/), this will talk to your IAM role and give it permission to do the functions below
+    - Effect: 'Allow'
       Action:
         - dynamodb:DescribeTable #to know metadata about the table
         - dynamodb:Scan #gets all the items (like a get req)
